@@ -1,0 +1,54 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Copse', serif;
+    color: white;
+}
+
+body {
+    background-image: url('https://www.nps.gov/grsm/planyourvisit/images/Lightning_LookRock_for-web_1.jpg');
+    background-size: 100%;
+    max-height: 100%;
+}
+
+#container {
+    text-align: center;
+    /*display:flex;*/
+}
+
+h1 {
+    text-align: center;
+    font-size: 48px;
+}
+
+button {
+    border: 3px solid white;
+    width: 20%;
+    font-size: 20px;
+    background-color: #000000;
+    color: #ffffff;
+    display: inline-block;
+    opacity: .5;
+}
+
+.currentTempStyles {
+    border: 3px solid #ffffff;
+    width: 20%;
+    margin: 10% auto;
+}
+
+.hourlyTempStyles {
+    border: 3px solid #ffffff;
+    display: inline-block;
+    width: 12%;
+    margin: 5% 2%;
+    padding: 3%;
+}
+
+.dailyTempStyles {
+    border: 3px solid #ffffff;
+    display: inline-block;
+    width: 20%;
+    margin: 5% 2%;
+}
+
+
