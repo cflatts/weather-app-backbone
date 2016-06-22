@@ -7,6 +7,13 @@ var container = document.querySelector('#selectedWeather'),
     hourlyButton = document.querySelector('#hourly'),
     dailyButton = document.querySelector('#daily')
 
+//sets null in latitude and longitude as default state
+var STATE = {
+    lat: null,
+    lng: null
+}
+
+
 // CURRENT WEATHER SET UP
 
 var currentWeather = function(posObj) {
@@ -14,7 +21,7 @@ var currentWeather = function(posObj) {
         longitude = posObj.coords.longitude
     var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
         currentPromise = $.getJSON(completeUrl)
-    currentPromise.then(currentHTML)
+    currentPromise.then(function(data){console.log(data)})
 }
 
 var currentHTML = function(apiResponse){
@@ -100,31 +107,87 @@ var singleDayHTML = function(apiResponse){
 }
 
 
-var viewChange = function(event) {
-    var buttonEl = event.target
-    window.location.hash = buttonEl.value
+// var viewChange = function(event) {
+//     var buttonEl = event.target
+//     window.location.hash =  buttonEl.value
+// }
+
+
+// var controller = function() {
+//     var viewType = window.location.hash.substring(1)
+//     if (viewType === 'current') {
+//         navigator.geolocation.getCurrentPosition(currentWeather)
+//     }
+//     else if (viewType === 'daily') {
+//         navigator.geolocation.getCurrentPosition(dailyWeather)
+//     }
+//     else {
+//         navigator.geolocation.getCurrentPosition(hourlyWeather)
+//     }
+// }
+
+
+// if (window.location.hash === '') window.location.hash = 'current'
+// else controller()
+
+var addEvtLists = function() {
+    var switchViewTypes = function(eventObj) {
+        buttonNode = eventObj.target
+        viewType= buttonNode.value
+        location.hash = STATE.lat + ',' + STATE.lng + viewType
+    }
+}
+
+var geolocate = function() {
+    var success = function(posObj) {
+        var lat = latitude.coords.latitude
+        var lng = longitude.coords.longitude
+        STATE.lat = lat
+        STATE.lng = lng
+        location.hash = lat + ',' + lng + '/current'
+    }
+    var error = function(positionError) {
+        return 'Can not find location, please try again!'
+    }
+    navigator.geolocation.getCurrentPosition(success, error)
 }
 
 
-var controller = function() {
-    var viewType = window.location.hash.substring(1)
-    if (viewType === 'current') {
-        navigator.geolocation.getCurrentPosition(currentWeather)
+var WeatherRouter = Backbone.Router.extend({
+    routes: {
+        ':lat/:lng/current': 'showCurrent',
+        ':lat/:lng/hourly': 'showHourly',
+        ':lat/:lng/daily':'showDaily',
+        '*anything':'geolocate'
+    },
+    geolocate: function() {
+        geolocate()
+    },
+    showCurrent: function(lat, lng) {
+        STATE.lat = lat
+        STATE.lng = lng
+
+        currentHTML()
+    },
+    showHourly: function(lat, lng) {
+        STATE.lat = lat
+        STATE.lng = lng
+
+        hourlyHTML()
+
+    },
+    showDaily: function(lat, lng) {
+        STATE.lat = lat
+        STATE.lng = lng
+
+        dailyHTML()
     }
-    else if (viewType === 'daily') {
-        navigator.geolocation.getCurrentPosition(dailyWeather)
-    }
-    else {
-        navigator.geolocation.getCurrentPosition(hourlyWeather)
-    }
-}
+})
 
+var rtr = new WeatherRouter()
+Backbone.history.start()
 
-if (window.location.hash === '') window.location.hash = 'current'
-else controller()
-
-
-window.addEventListener('hashchange', controller)
+// window.addEventListener('hashchange', controller)
 currentButton.addEventListener('click', viewChange)
 dailyButton.addEventListener('click', viewChange)
 hourlyButton.addEventListener('click', viewChange)
