@@ -1,28 +1,28 @@
-// desired Url format: https://api.forecast.io/forecast/APIKEY/LATITUDE,LONGITUDE
 var token = '24f2aa04159572709868a25ac5846300'
-var rootUrl = "https://api.forecast.io/forecast/" + token
+var rootUrl = 'https://api.forecast.io/forecast/'
 
 var container = document.querySelector('#selectedWeather'),
+    buttonsContainer = document.querySelector('.buttons')
     currentButton = document.querySelector('#current'),
     hourlyButton = document.querySelector('#hourly'),
     dailyButton = document.querySelector('#daily')
 
-//sets null in latitude and longitude as default state
 var STATE = {
     lat: null,
     lng: null
 }
 
 
+
 // CURRENT WEATHER SET UP
 
-var currentWeather = function(posObj) {
-    var latitude = posObj.coords.latitude,
-        longitude = posObj.coords.longitude
-    var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
-        currentPromise = $.getJSON(completeUrl)
-    currentPromise.then(function(data){console.log(data)})
-}
+// var currentWeather = function(posObj) {
+//     // var latitude = posObj.coords.latitude,
+//     //     longitude = posObj.coords.longitude
+//     var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
+//         currentPromise = $.getJSON(completeUrl)
+//     currentPromise.then(currentHTML)
+// }
 
 var currentHTML = function(apiResponse){
     var htmlString = '<div class = "currentTempStyles">'
@@ -34,16 +34,16 @@ var currentHTML = function(apiResponse){
 
 // HOURLY WEATHER SET UP
 
-var hourlyWeather = function(posObj) {
-    var latitude = posObj.coords.latitude,
-        longitude = posObj.coords.longitude
-    var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
-        hourlyPromise = $.getJSON(completeUrl)
-    hourlyPromise.then(hourlyHTML)
-}
+// var hourlyWeather = function(posObj) {
+//     var latitude = posObj.coords.latitude,
+//         longitude = posObj.coords.longitude
+//     var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
+//         hourlyPromise = $.getJSON(completeUrl)
+//     hourlyPromise.then(hourlyHTML)
+// }
 
-var hourlyHTML = function(hourlyData) {
-    var hourlyArray = hourlyData.hourly.data
+var hourlyHTML = function(apiResponse) {
+    var hourlyArray = apiResponse.hourly.data
     var completeHtmlString = ''
     for(var i = 0; i < 12; i++) {
         var singleHour = hourlyArray[i]
@@ -70,16 +70,16 @@ var singleHourHtml = function(apiResponse){
 
 // DAILY WEATHER SET UP
 
-var dailyWeather = function(posObj) {
-    var latitude = posObj.coords.latitude,
-        longitude = posObj.coords.longitude
-    var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
-        dailyPromise = $.getJSON(completeUrl)
-    dailyPromise.then(dailyHTML)
-}
+// var dailyWeather = function(posObj) {
+//     var latitude = posObj.coords.latitude,
+//         longitude = posObj.coords.longitude
+//     var completeUrl = rootUrl + '/' + latitude + ',' + longitude,
+//         dailyPromise = $.getJSON(completeUrl)
+//     dailyPromise.then(dailyHTML)
+// }
 
-var dailyHTML = function(dailyData) {
-    var daysArray = dailyData.daily.data
+var dailyHTML = function(apiResponse) {
+    var daysArray = apiResponse.daily.data
     var completeHtmlString = ''
     for(var i = 0; i < daysArray.length; i++){
         var singleDay = daysArray[i]
@@ -134,17 +134,20 @@ var addEvtLists = function() {
     var switchViewTypes = function(eventObj) {
         buttonNode = eventObj.target
         viewType= buttonNode.value
-        location.hash = STATE.lat + ',' + STATE.lng + viewType
+        console.log(buttonNode)
+        location.hash = STATE.lat + '/' + STATE.lng + '/' + viewType
+        console.log(location.hash)
     }
+    buttonsContainer.addEventListener('click', switchViewTypes)
 }
 
 var geolocate = function() {
     var success = function(posObj) {
-        var lat = latitude.coords.latitude
-        var lng = longitude.coords.longitude
+        var lat = posObj.coords.latitude
+        var lng = posObj.coords.longitude
         STATE.lat = lat
         STATE.lng = lng
-        location.hash = lat + ',' + lng + '/current'
+        location.hash = lat + '/' + lng + '/current'
     }
     var error = function(positionError) {
         return 'Can not find location, please try again!'
@@ -152,6 +155,16 @@ var geolocate = function() {
     navigator.geolocation.getCurrentPosition(success, error)
 }
 
+var WeatherModel = Backbone.Model.extend({
+    url: function () {
+        var fullUrl = rootUrl + token + '/' + this.lat + ',' + this.lng
+        return fullUrl
+    },
+    initialize: function (inputLat, inputLng) {
+        this.lat = inputLat
+        this.lng = inputLng
+    }
+})
 
 var WeatherRouter = Backbone.Router.extend({
     routes: {
@@ -162,32 +175,38 @@ var WeatherRouter = Backbone.Router.extend({
     },
     geolocate: function() {
         geolocate()
+
     },
     showCurrent: function(lat, lng) {
         STATE.lat = lat
         STATE.lng = lng
 
-        currentHTML()
+        var weatherModel = new WeatherModel(lat, lng)
+        weatherModel.fetch().then(currentHTML)
     },
     showHourly: function(lat, lng) {
         STATE.lat = lat
         STATE.lng = lng
 
-        hourlyHTML()
+        var weatherModel = new WeatherModel(lat, lng)
+        weatherModel.fetch().then(hourlyHTML)
 
     },
     showDaily: function(lat, lng) {
         STATE.lat = lat
         STATE.lng = lng
 
-        dailyHTML()
+        var weatherModel = new WeatherModel(lat, lng)
+        weatherModel.fetch().then(dailyHTML)
     }
 })
 
 var rtr = new WeatherRouter()
 Backbone.history.start()
 
-// window.addEventListener('hashchange', controller)
-currentButton.addEventListener('click', viewChange)
-dailyButton.addEventListener('click', viewChange)
-hourlyButton.addEventListener('click', viewChange)
+addEvtLists()
+
+// // window.addEventListener('hashchange', controller)
+// currentButton.addEventListener('click', viewChange)
+// dailyButton.addEventListener('click', viewChange)
+// hourlyButton.addEventListener('click', viewChange)
